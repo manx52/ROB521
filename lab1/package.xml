@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>rob521_lab1</name>
+  <version>1.0.0</version>
+  <description>
+    Starter code for Lab 1 of ROB 521: Mobile Robotics and Perception
+  </description>
+  <license>Apache 2.0</license>
+  <author email="yuxuansherry.chen@mail.utoronto.ca">sherry</author>
+  <maintainer email="yuxuansherry.chen@mail.utoronto.ca">sherry</maintainer>
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>rospy</depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
+</package>
