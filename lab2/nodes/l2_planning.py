@@ -64,6 +64,13 @@ class PathPlanner:
         self.bounds[1, 1] = self.map_settings_dict["origin"][1] + self.map_shape[0] * self.map_settings_dict[
             "resolution"]
 
+        self.bounds_pixel = np.zeros([2, 2])  # m
+        self.bounds_pixel[0, 0] = self.map_settings_dict["origin"][0]
+        self.bounds_pixel[1, 0] = self.map_settings_dict["origin"][1]
+        self.bounds_pixel[0, 1] = self.map_settings_dict["origin"][0] + self.map_shape[0] * self.map_settings_dict[
+            "resolution"]
+        self.bounds_pixel[1, 1] = self.map_settings_dict["origin"][1] + self.map_shape[1] * self.map_settings_dict[
+            "resolution"]
         # Robot information
         self.robot_radius = 0.22  # m
         self.vel_max = 0.5  # m/s (Feel free to change!)
@@ -101,29 +108,30 @@ class PathPlanner:
 
         sample = np.zeros((2, 1))
         # real_bounds = np.array([[-3.5, 43.5], [-49.25, 20]])
-        real_bounds = np.array([[0.0, 43.5], [-46, 10]])
+        real_bounds = self.bounds  # np.array([[0.0, 43.5], [-46, 10]])
+        # real_bounds = np.array([[0.0, 43.5], [-46, 10]])
         #
         sample[0] = np.random.uniform(low=real_bounds[0, 0], high=real_bounds[0, 1])
         sample[1] = np.random.uniform(low=real_bounds[1, 0], high=real_bounds[1, 1])
         # return sample
 
-        if abs(self.dist_to_goal(self.nodes[-1].point)) < 20:
-            scale = 0.075
-            scale_x = scale * (real_bounds[0,1] - real_bounds[0,0])  # 10% box
-            scale_y = scale * (real_bounds[1,1] - real_bounds[1,0])
-
-            curr_coord = self.nodes[-1].point
-            x_box_low = np.clip(curr_coord[0] - scale_x, real_bounds[0,0], real_bounds[0,1])
-            y_box_low = np.clip(curr_coord[1] - scale_y, real_bounds[1,0], real_bounds[1,1])
-
-            x_box_high = np.clip(curr_coord[0] + scale_x, real_bounds[0,0], real_bounds[0,1])
-            y_box_high = np.clip(curr_coord[1] + scale_y, real_bounds[1,0], real_bounds[1,1])
-
-            x_sample = np.random.uniform(low=x_box_low, high=x_box_high)
-            y_sample = np.random.uniform(low=y_box_low, high=y_box_high)
-
-            sample[0] = x_sample
-            sample[1] = y_sample
+        # if abs(self.dist_to_goal(self.nodes[-1].point)) < 20:
+        #     scale = 0.075
+        #     scale_x = scale * (real_bounds[0,1] - real_bounds[0,0])  # 10% box
+        #     scale_y = scale * (real_bounds[1,1] - real_bounds[1,0])
+        #
+        #     curr_coord = self.nodes[-1].point
+        #     x_box_low = np.clip(curr_coord[0] - scale_x, real_bounds[0,0], real_bounds[0,1])
+        #     y_box_low = np.clip(curr_coord[1] - scale_y, real_bounds[1,0], real_bounds[1,1])
+        #
+        #     x_box_high = np.clip(curr_coord[0] + scale_x, real_bounds[0,0], real_bounds[0,1])
+        #     y_box_high = np.clip(curr_coord[1] + scale_y, real_bounds[1,0], real_bounds[1,1])
+        #
+        #     x_sample = np.random.uniform(low=x_box_low, high=x_box_high)
+        #     y_sample = np.random.uniform(low=y_box_low, high=y_box_high)
+        #
+        #     sample[0] = x_sample
+        #     sample[1] = y_sample
         return sample
 
     def check_if_duplicate(self, point):
@@ -149,8 +157,12 @@ class PathPlanner:
         traj_rr, traj_cc = self.points_to_robot_circle(
             robot_traj[0:2, :])  # center and radius of trajectory in occupacy map
         footprint = np.moveaxis(np.array([traj_rr, traj_cc]), 0, 2)
+        # print(self.bounds)
         # print(self.occupancy_map[footprint[..., 1], footprint[..., 0]][np.any(self.occupancy_map[footprint[..., 1], footprint[..., 0]] == 0, axis = -1)])
-        return np.any(np.any(self.occupancy_map[footprint[..., 1], footprint[..., 0]] == 0, axis=-1))
+        temp_x = np.clip(footprint[..., 1], 0, self.map_shape[0] - 1)
+        temp_y = np.clip(footprint[..., 0], 0, self.map_shape[1] - 1)
+
+        return np.any(np.any(self.occupancy_map[temp_x, temp_y] == 0, axis=-1))
 
     def closest_node(self, point, n):
         # print(point)
@@ -164,7 +176,6 @@ class PathPlanner:
             return i
 
         return i[0:n]
-
 
     def simulate_trajectory2(self, node_i, point_s):
         # Simulates the non-holonomic motion of the robot.
@@ -204,28 +215,29 @@ class PathPlanner:
         # point_s is the sampled point vector [x; y]
 
         vel, rot_vel = self.robot_controller(node_i, point_s)
-        if abs(self.dist_to_goal(node_i) > 10):
-            traj = self.trajectory_rollout(vel, rot_vel, node_i)  # real world coord
-        else:
-            min_dist_goal = float("inf")
-            traj = None
-            for i in range(1, 11):
-                if i <= 5:
-                    robot_traj = self.trajectory_rollout(vel, rot_vel + (i * 0.025), node_i)
-                else:
-                    robot_traj = self.trajectory_rollout(vel, rot_vel - ((i - 5) * 0.025), node_i)
-                dist_to_goal = self.dist_to_goal(robot_traj[:, -1])
-
-                if traj is None:
-                    min_dist_goal = dist_to_goal
-                    traj = robot_traj
-                else:
-                    collision = self.check_colision(robot_traj)
-                    duplicate = self.check_if_duplicate(robot_traj[:, -1])
-                    if not (collision or duplicate):
-                        if dist_to_goal < min_dist_goal:
-                            min_dist_goal = dist_to_goal
-                            traj = robot_traj
+        # if abs(self.dist_to_goal(node_i) > 10):
+        traj = self.trajectory_rollout(vel, rot_vel, node_i)  # real world coord
+        # else:
+        # pass
+        # min_dist_goal = float("inf")
+        # traj = None
+        # for i in range(1, 11):
+        #     if i <= 5:
+        #         robot_traj = self.trajectory_rollout(vel, rot_vel + (i * 0.025), node_i)
+        #     else:
+        #         robot_traj = self.trajectory_rollout(vel, rot_vel - ((i - 5) * 0.025), node_i)
+        #     dist_to_goal = self.dist_to_goal(robot_traj[:, -1])
+        #
+        #     if traj is None:
+        #         min_dist_goal = dist_to_goal
+        #         traj = robot_traj
+        #     else:
+        #         collision = self.check_colision(robot_traj)
+        #         duplicate = self.check_if_duplicate(robot_traj[:, -1])
+        #         if not (collision or duplicate):
+        #             if dist_to_goal < min_dist_goal:
+        #                 min_dist_goal = dist_to_goal
+        #                 traj = robot_traj
         return traj
 
     def dist_to_goal(self, point):
@@ -344,12 +356,13 @@ class PathPlanner:
 
         rr = []
         cc = []
-        robot_radius = np.floor(self.robot_radius / self.map_settings_dict["resolution"]).astype(int)
+        robot_radius = np.floor(self.robot_radius // self.map_settings_dict["resolution"]).astype(int)
 
         for pt in (np.transpose(points)):
             occ = self.point_to_cell(pt)
 
             temp_rr, temp_cc = circle_perimeter(occ[0], occ[1], robot_radius)
+
             rr.append(temp_rr)
             cc.append(temp_cc)
         return np.array(rr), np.array(cc)
@@ -497,7 +510,8 @@ class PathPlanner:
         curr_cost = self.nodes[node_id].cost
 
         for i, child in enumerate(self.nodes[node_id].children_ids):
-            traj = self.connect_node_to_point(self.nodes[node_id].point, np.array(self.nodes[child].point[:2, -1].reshape((2, 1))))
+            traj = self.connect_node_to_point(self.nodes[node_id].point,
+                                              np.array(self.nodes[child].point[:2, -1].reshape((2, 1))))
             self.nodes[child].cost = self.cost_to_come(traj) + curr_cost
 
             # if len(self.nodes[child].children_ids) != 0:
@@ -633,7 +647,8 @@ class PathPlanner:
                                 continue
 
                             # Simulate trajectory from pt to near nodes
-                            trajectory_node = self.connect_node_to_point(self.nodes[-1].point, np.array(self.nodes[node].point[:2, -1].reshape((2, 1))))
+                            trajectory_node = self.connect_node_to_point(self.nodes[-1].point, np.array(
+                                self.nodes[node].point[:2, -1].reshape((2, 1))))
 
                             # Check for Collision
                             collision = self.check_colision(trajectory_node)
@@ -663,6 +678,7 @@ class PathPlanner:
                 temp_pt = np.array(trajectory_o[0:2, :]).copy().T
                 self.window.add_se2_pose(np.array(trajectory_o[:, -1].reshape((3,))))
                 self.vis(temp_pt)
+                # print(temp_pt)
                 #
 
                 # Check if goal has been reached
@@ -676,12 +692,12 @@ class PathPlanner:
                     # print("goal: ", self.goal_point[0], "  ", self.goal_point[1])
                     # print("diff: ", x - self.goal_point[0], "  ", y - self.goal_point[1])
                     # print("diff: ", (x - self.goal_point[0]) ** 2, "  ", (y - self.goal_point[1])** 2)
-                    # print("rrt star success")
+                    print("rrt star success")
                     return self.recover_path()
 
-            # self.window.add_point(point.reshape(2, ))
+            self.window.add_point(point.reshape(2, ))
+            # print(point.reshape(2, ))
             # print("rrt star failed")
-
 
             i += 1
 
@@ -703,24 +719,24 @@ class PathPlanner:
 
 def main():
     # Set map information
-    map_filename = "willowgarageworld_05res.png"
-    # map_filename = "simple_map.png"
-    map_setings_filename = "willowgarageworld_05res.yaml"
-
+    # map_filename = "willowgarageworld_05res.png"
+    # map_setings_filename = "willowgarageworld_05res.yaml"
+    map_filename = "myhal.png"
+    map_setings_filename = "myhal.yaml"
     # robot information
-    # goal_point = np.array([[3], [-10]])  # m
-    goal_point = np.array([[42], [-44]])  # m
+    goal_point = np.array([[7], [0]])  # m
+    # goal_point = np.array([[42], [-44]])  # m
     stopping_dist = 0.5  # m
 
     # RRT precursor
     path_planner = PathPlanner(map_filename, map_setings_filename, goal_point, stopping_dist)
 
-    nodes = path_planner.rrt_planning()
-    # nodes = path_planner.rrt_star_planning()
+    # nodes = path_planner.rrt_planning()
+    nodes = path_planner.rrt_star_planning()
     node_path_metric = np.hstack(path_planner.recover_path())
 
     # Leftover test functions
-    # np.save("shortest_path.npy", node_path_metric)
+    np.save("shortest_path_myhal.npy", node_path_metric)
 
     # print(nodes)
     for i in nodes:
