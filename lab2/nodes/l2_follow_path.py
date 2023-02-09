@@ -139,14 +139,15 @@ class PathFollower():
             local_paths[0] = np.atleast_2d(self.pose_in_map_np).repeat(self.num_opts, axis=0)
 
             # print("TO DO: Propogate the trajectory forward, storing the resulting points in local_paths!")
-            # for t in range(0, self.num_opts):
-            #     # propogate trajectory forward, assuming perfect control of velocity and no dynamic effects
-            #     local_paths[:, t, :] = self.trajectory_rollout(self.all_opts_scaled[t, 0], self.all_opts_scaled[t, 1],
-            #                                                    self.pose_in_map_np).T
-            #     pass
+            for t in range(0, self.num_opts):
+                #     propogate trajectory forward, assuming perfect control of velocity and no dynamic effects
+                local_paths[:, t, :] = self.trajectory_rollout(self.all_opts_scaled[t, 0], self.all_opts_scaled[t, 1],
+                                                               self.pose_in_map_np).T
+                pass
             #
             # # check all trajectory points for collisions
             # # first find the closest collision point in the map to each local path point
+
             local_paths_pixels = (self.map_origin[:2] + local_paths[:, :, :2]) / self.map_resolution
             valid_opts = range(self.num_opts)
 
@@ -156,10 +157,10 @@ class PathFollower():
                 y = local_paths_pixels[:, opt, 1]
 
                 for p in range(len(x)):
-                    if self.map_np[int(x[p]), int(y[p])] == 0:
+                    if self.map_np[int(x[p]), int(y[p])] == 100:
                         collision_traj_idx.append(opt)
                         break
-
+            # print("collision_traj_idx:", collision_traj_idx)
             # remove trajectories that were deemed to have collisions
             # print("TO DO: Remove trajectories with collisions!")
             valid_opts = np.delete(np.array(valid_opts), collision_traj_idx)
@@ -170,10 +171,13 @@ class PathFollower():
             final_cost = np.zeros(self.num_opts)
             for i in range(self.num_opts):
                 if i in valid_opts:
-                    final_cost[i] = self.cost_to_come(local_paths[:, i, :].T)
+                    # final_cost[i] = self.cost_to_come(local_paths[:, i, :].T)
+                    final_cost[i] = self.cost_to_go(local_paths[:, i, :].T)
+                    # print("*****************in first cond")
                 else:
                     final_cost[i] = np.Inf
-
+                    # print("in else")
+            print("cost to go", final_cost)
 
             if final_cost.min == np.Inf:  # hardcoded recovery if all options have collision
                 control = [-.1, 0]
@@ -205,6 +209,19 @@ class PathFollower():
             cost += np.sqrt(x_d ** 2 + y_d ** 2)
 
         return cost
+
+    def cost_to_go(self, trajectory_o):
+        cost = 0.0
+        x_goal = self.cur_goal[0]
+        y_goal = self.cur_goal[1]
+        for i in range(1, len(trajectory_o[0])):
+            x_d = x_goal - trajectory_o[0, i]
+            y_d = y_goal - trajectory_o[1, i]
+
+            cost += np.sqrt(x_d ** 2 + y_d ** 2)
+
+        return cost
+
     def check_colision(self, robot_traj):
         # pass in trajectory = 3 X N from simulate_trajectory() and check for collision
         # False -> collision detected
@@ -239,7 +256,7 @@ class PathFollower():
 
         for pt in (np.transpose(points)):
             occ = self.point_to_cell(pt)
-            print(occ)
+
             temp_rr, temp_cc = circle_perimeter(int(occ[0]), int(occ[1]), robot_radius)
             rr.append(temp_rr)
             cc.append(temp_cc)
