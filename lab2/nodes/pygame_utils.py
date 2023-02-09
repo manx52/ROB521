@@ -1,7 +1,7 @@
 import numpy as np
 import pygame
-# from pygame.locals import *
-
+from pygame.locals import *
+import sys
 COLORS = dict(
     w = (255, 255, 255),
     k = (0, 0, 0),
@@ -40,6 +40,9 @@ class PygameWindow:
 
         self.add_se2_pose([0, 0, 0], length=5, color=COLORS['r'])
         self.add_point(goal_point.flatten(), radius=stopping_dist / self.meters_per_pixel, color=COLORS['g'])
+        #while True:
+
+        #   self.check_for_close()
 
     def add_point(self, map_frame_point, radius=1, width=0, color=COLORS['k']):
         map_frame_point[1] = -map_frame_point[1]  # for top left origin
@@ -47,7 +50,8 @@ class PygameWindow:
         pygame.draw.circle(self.screen, color, point_vec, radius, width)
         pygame.display.update()
 
-    def add_se2_pose(self, map_frame_pose, length=1, width=0, color=COLORS['k']):
+
+    def add_se2_pose(self, map_frame_pose, length=3, width=3, color=COLORS['g']):
         map_frame_pose[1] = -map_frame_pose[1]  # for top left origin
         l = length
         p_center = np.array(map_frame_pose[:2]) / self.meters_per_pixel + self.origin_pixels
@@ -65,7 +69,7 @@ class PygameWindow:
         pygame.draw.polygon(self.screen, color, [c_vec, p1_vec, p2_vec], width=width)
         pygame.display.update()
 
-    def add_line(self, map_frame_point1, map_frame_point2, width=1, color=COLORS['k']):
+    def add_line(self, map_frame_point1, map_frame_point2, width=1, color=COLORS['g']):
         map_frame_point1[1] = -map_frame_point1[1]  # for top left origin
         p1 = self.point_to_vec(np.array(map_frame_point1) / self.meters_per_pixel + self.origin_pixels)
         map_frame_point2[1] = -map_frame_point2[1]  # for top left origin
@@ -85,3 +89,15 @@ class PygameWindow:
         for e in pygame.event.get():
             if e.type == QUIT or (e.type == KEYUP and e.key == K_ESCAPE):
                 sys.exit("Closing planner.")
+
+    def display(self):
+
+        pygame.display.flip()
+
+        running = True
+
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+
