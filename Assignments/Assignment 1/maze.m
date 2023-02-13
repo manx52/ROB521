@@ -70,8 +70,8 @@ for ii=1:length(ptr_right)
         map = [map;[cc(ii)-.5,cc(ii)+.5,rr(ii)+.5,rr(ii)+.5]];
     end
 end
-
-map = [map(:,1) map(:,3) map(:,2) map(:,4)];
+map
+map = [map(:,1) map(:,3) map(:,2) map(:,4)]
 return
 
 
