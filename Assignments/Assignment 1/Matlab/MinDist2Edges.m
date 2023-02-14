@@ -21,3 +21,5 @@ for ii=1:n
 end
 
 d = min(dist');
+
+

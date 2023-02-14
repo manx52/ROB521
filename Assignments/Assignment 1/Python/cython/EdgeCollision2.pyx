@@ -1,7 +1,9 @@
 import numpy as np
-import EdgePtsToVec
-import AffineIntersect
-
+# import EdgePtsToVec
+# import AffineIntersect
+import pyximport; pyximport.install()
+import EdgePtsToVec2
+import AffineIntersect2
 def EdgeCollision(Edge1, Edge2, tol=0):
     # EDGECOLLISION Checks if two edges are colliding
     # Edge1 -> First edge being checked
@@ -52,9 +54,9 @@ def EdgeCollision(Edge1, Edge2, tol=0):
     if colliding:
         e1 = dict()
         e2 = dict()
-        e1['A'], e1['b'] = EdgePtsToVec.EdgePtsToVec(Edge1)
-        e2['A'], e2['b'] = EdgePtsToVec.EdgePtsToVec(Edge2)
-        pt, colliding = AffineIntersect.AffineIntersect(e1, e2)
+        e1['A'], e1['b'] = EdgePtsToVec2.EdgePtsToVec(Edge1)
+        e2['A'], e2['b'] = EdgePtsToVec2.EdgePtsToVec(Edge2)
+        pt, colliding = AffineIntersect2.AffineIntersect(e1, e2)
     else:
         pt = [0, 0]
 
@@ -66,17 +68,7 @@ def OnSegment(pi, pj, pk):
         return True
     else:
         return False
-#
-# import time
-# t1 = time.time()
+
+
 # print(EdgeCollision(np.array([1,2, 1,1]).reshape((4)),  np.array([1,0.5,2,0.5]).reshape((4))))
 # print(EdgeCollision(np.array([0,0,0,1]).reshape((4)),  np.array([0,0.5,2,0.5]).reshape((4))))
-# t2 = time.time()
-# print(t2-t1)
-# import pyximport; pyximport.install()
-# import EdgeCollision2
-# t3 = time.time()
-# print(EdgeCollision2.EdgeCollision(np.array([1,2, 1,1]).reshape((4)),  np.array([1,0.5,2,0.5]).reshape((4))))
-# print(EdgeCollision2.EdgeCollision(np.array([0,0,0,1]).reshape((4)),  np.array([0,0.5,2,0.5]).reshape((4))))
-# t4 = time.time()
-# print(t4-t3)

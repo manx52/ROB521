@@ -278,8 +278,8 @@ rand('twister', 1337);
 % full marks)
 
 
-row = 25;
-col = 25;
+row = 40;
+col = 40;
 map = maze(row,col);
 start = [0.5, 1.0];
 finish = [col+0.5, row];
@@ -457,11 +457,6 @@ figure(2); hold on;
 plot(milestones(:,1),milestones(:,2),'m.');
 if (~isempty(edges))
     line(edges(:,1:2:3)', edges(:,2:2:4)','Color','magenta')
-end
-if (~isempty(path))
-    for i=1:length(path)-1
-        plot(milestones(path(i:i+1),1),milestones(path(i:i+1),2), 'go', 'LineWidth',3);
-    end
 end
 if (~isempty(spath))
     for i=1:length(spath)-1

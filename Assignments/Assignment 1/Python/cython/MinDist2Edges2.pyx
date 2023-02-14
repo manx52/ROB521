@@ -26,10 +26,8 @@ def MinDist2Edges(points, edges):
 # print(MinDist2Edges(np.array([[0,0],[0,1]]).reshape((2,2)),  np.array([0,0.5,2,0.5]).reshape((1,4))))
 # t2 = time.time()
 # print(t2-t1)
-# import pyximport; pyximport.install()
-# import MinDist2Edges2
 # t3 = time.time()
-# print(MinDist2Edges2.MinDist2Edges(np.array([[1,2],[1,1]]).reshape((2,2)),  np.array([1,0.5,2,0.5]).reshape((1,4))))
-# print(MinDist2Edges2.MinDist2Edges(np.array([[0,0],[0,1]]).reshape((2,2)),  np.array([0,0.5,2,0.5]).reshape((1,4))))
+# print(MinDist2Edges2(np.array([[1,2],[1,1]]).reshape((2,2)),  np.array([1,0.5,2,0.5]).reshape((1,4))))
+# print(MinDist2Edges2(np.array([[0,0],[0,1]]).reshape((2,2)),  np.array([0,0.5,2,0.5]).reshape((1,4))))
 # t4 = time.time()
 # print(t4-t3)
