@@ -300,21 +300,21 @@ class PathPlanner:
             y = vel * t * np.sin(theta0) + y0
             theta = np.zeros_like(t)
         else:
-            temp_x = (vel / rot_vel) * (np.sin(rot_vel * t + theta0) - np.sin(theta0)) + x0
-            offset = 0.5
-            x = np.clip(temp_x, self.bounds[0,0] + offset, self.bounds[0,1]-offset)
-            temp_y = -(vel / rot_vel) * (np.cos(rot_vel * t + theta0) - np.cos(theta0)) + y0
-            y = np.clip(temp_y, self.bounds[1, 0]+offset, self.bounds[1, 1] -offset)
-            if np.any(np.any(temp_x == x, axis=-1)) or np.any(np.any(temp_y == y, axis=-1)):
-                theta = theta0
-            else:
-                theta = (rot_vel * t + theta0) % (2 * math.pi)
-            # x = (vel / rot_vel) * (np.sin(rot_vel * t + theta0) - np.sin(theta0)) + x0
+            # temp_x = (vel / rot_vel) * (np.sin(rot_vel * t + theta0) - np.sin(theta0)) + x0
             # offset = 0.5
-            # # x = np.clip(temp_x, self.bounds[0, 0] + offset, self.bounds[0, 1] - offset)
-            # y = -(vel / rot_vel) * (np.cos(rot_vel * t + theta0) - np.cos(theta0)) + y0
-            # # y = np.clip(temp_y, self.bounds[1, 0] + offset, self.bounds[1, 1] - offset)
-            # theta = (rot_vel * t + theta0) % (2 * math.pi)
+            # x = np.clip(temp_x, self.bounds[0,0] + offset, self.bounds[0,1]-offset)
+            # temp_y = -(vel / rot_vel) * (np.cos(rot_vel * t + theta0) - np.cos(theta0)) + y0
+            # y = np.clip(temp_y, self.bounds[1, 0]+offset, self.bounds[1, 1] -offset)
+            # if np.any(np.any(temp_x == x, axis=-1)) or np.any(np.any(temp_y == y, axis=-1)):
+            #     theta = theta0
+            # else:
+            #     theta = (rot_vel * t + theta0) % (2 * math.pi)
+            x = (vel / rot_vel) * (np.sin(rot_vel * t + theta0) - np.sin(theta0)) + x0
+            offset = 0.5
+            # x = np.clip(temp_x, self.bounds[0, 0] + offset, self.bounds[0, 1] - offset)
+            y = -(vel / rot_vel) * (np.cos(rot_vel * t + theta0) - np.cos(theta0)) + y0
+            # y = np.clip(temp_y, self.bounds[1, 0] + offset, self.bounds[1, 1] - offset)
+            theta = (rot_vel * t + theta0) % (2 * math.pi)
         est_trajectory = np.vstack((x, y, theta))
 
         return est_trajectory
