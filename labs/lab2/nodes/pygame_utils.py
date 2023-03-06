@@ -27,8 +27,8 @@ class PygameWindow:
         self.map_settings_dict = map_settings_dict
         self.origin = np.array(map_settings_dict['origin'])
 
-        # map_img = pygame.image.load('../maps/willowgarageworld_05res.png')
-        map_img = pygame.image.load('../maps/myhal.png')
+        map_img = pygame.image.load('../maps/willowgarageworld_05res.png')
+        # map_img = pygame.image.load('../maps/myhal.png')
         map_img = pygame.transform.scale(map_img, self.size)
 
         self.screen = pygame.display.set_mode(self.size)

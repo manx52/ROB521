@@ -83,7 +83,7 @@ class PathFollower():
         self.map_resolution = 0.05
         self.map_origin = np.array([ 0.2 , 0.2 ,-0. ])
         self.map_nonzero_idxes = np.argwhere(self.map_np)
-        print(self.map_np)
+        # print(self.map_np)
         # self.bounds = np.zeros([2, 2])  # m
         # self.bounds[0, 0] = self.map_origin[0]
         # self.bounds[1, 0] = self.map_origin[1]
