@@ -239,8 +239,9 @@ class PathPlanner:
         theta_d = np.arctan2((point_s[1] - node_i[1]), (point_s[0] - node_i[0]))
         theta = node_i[2]
         heading_error = theta_d - theta
+        heading_error_norm = math.atan2(math.sin(heading_error), math.cos(heading_error))
         # print(heading_error)
-        rot_vel = -4 * self.alpha * np.tan(heading_error / 2)
+        rot_vel = -4 * self.alpha * np.tan(heading_error_norm)
 
         if rot_vel > self.rot_vel_max:
             rot_vel = self.rot_vel_max
@@ -459,7 +460,7 @@ class PathPlanner:
             theta_s = math.atan2(y_d, x_d)
             theta_d = theta_s - node[2]
             theta_d_norm = math.atan2(math.sin(theta_d), math.cos(theta_d))
-            cost += np.sqrt(x_d ** 2 + y_d ** 2)  # + (0.25*theta_d_norm)**2)
+            cost += np.sqrt(x_d ** 2 + y_d ** 2  )#+ (0.1* theta_d_norm)**2)
 
         return cost
 
@@ -647,11 +648,17 @@ class PathPlanner:
                                 self.nodes[self.nodes[-1].id].children_ids.append(node)
                                 self.update_children(node)
 
-                                # temp_pt = np.array(trajectory_node[0:2, :]).copy().T
-                                # temp_pt_old = np.array(trajectory_old[0:2, :]).copy().T
-                                # # self.window.add_se2_pose(np.array(trajectory_node[:, -1].reshape((3,))))
+                                temp_pt = np.array(trajectory_node[0:2, :]).copy().T
+                                temp_pt_old = np.array(trajectory_old[0:2, :]).copy().T
+                                self.window.add_se2_pose(np.array(trajectory_node[:, -1].reshape((3,))))
+                                self.vis(temp_pt)
                                 # self.remove_vis(temp_pt_old)
-                                # self.vis(temp_pt)
+
+                # visualize
+                # print("added node", self.nodes[-1].id, self.nodes[-1].parent_id)
+                temp_pt = np.array(trajectory_o[0:2, :]).copy().T
+                self.window.add_se2_pose(np.array(trajectory_o[:, -1].reshape((3,))))
+                self.vis(temp_pt)
 
                 # visualize
                 # print("added node", self.nodes[-1].id, self.nodes[-1].parent_id)
@@ -673,10 +680,10 @@ class PathPlanner:
                     # print("goal: ", self.goal_point[0], "  ", self.goal_point[1])
                     # print("diff: ", x - self.goal_point[0], "  ", y - self.goal_point[1])
                     # print("diff: ", (x - self.goal_point[0]) ** 2, "  ", (y - self.goal_point[1])** 2)
-                    for node in self.nodes[1:]:
-                        temp_pt = np.array(node.traj[0:2, :]).copy().T
-                        self.vis(temp_pt)
-                        self.window.add_se2_pose(np.array(node.traj[:, 0]).reshape((3,)))
+                    # for node in self.nodes[1:]:
+                    #     temp_pt = np.array(node.traj[0:2, :]).copy().T
+                    #     self.vis(temp_pt)
+                    #     self.window.add_se2_pose(np.array(node.traj[:, 0]).reshape((3,)))
                     print("rrt star success")
                     return self.recover_path()
 
@@ -692,7 +699,9 @@ class PathPlanner:
         while current_node_id > -1:
             path.append(self.nodes[current_node_id].point)
             current_node_id = self.nodes[current_node_id].parent_id
+            print(current_node_id)
         path.reverse()
+        print("Path recovered")
         return path
 
     def vis(self, points):
@@ -726,7 +735,7 @@ def main():
     node_path_metric = np.hstack(path_planner.recover_path())
 
     # Leftover test functions
-    # np.save("shortest_path_rrtstar.npy", node_path_metric)
+    np.save("shortest_path_rrtstar.npy", node_path_metric)
     # np.save("shortest_path_rrt.npy", node_path_metric)
     # np.save("shortest_path_rrtstar_myhal.npy", node_path_metric)
 
