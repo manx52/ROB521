@@ -39,7 +39,7 @@ rng(1);
 %    laser range limits: r_min_laser r_max_laser
 %    laser angle limits: phi_min_laser phi_max_laser
 %
-load gazebo.mat;
+load ROB521_assignment2_gazebo_data.mat;
 
 % ======================================================
 % Question 1: code (noise-free) wheel odometry algorithm
@@ -49,7 +49,7 @@ load gazebo.mat;
 % using the wheel odometry data (t_odom, v_odom, omega_odom) and assuming
 % a differential-drive robot model.  Save your estimate in the variables
 % (x_odom y_odom theta_odom) so that the comparison plots can be generated
-% below.  See the plot 'ass1_q1_soln.png' for what your results should look
+% below.  See the plot 'ass2_q1_soln.png' for what your results should look
 % like.
 
 % variables to store wheel odometry pose estimates
@@ -65,16 +65,12 @@ theta_odom(1) = theta_true(1);
 
 % ------insert your wheel odometry algorithm here-------
 for i=2:numodom
+    dt = t_odom(i) - t_odom(i-1);
+    x_odom(i) = x_odom(i-1) + v_odom(i-1)*cos(theta_odom(i-1))*dt;
+    y_odom(i) = y_odom(i-1) + v_odom(i-1)*sin(theta_odom(i-1))*dt;
+    theta_odom(i) =  theta_odom(i-1) + omega_odom(i-1)*dt;
 
-
-
-
-
-
-
-
-
-
+    theta_odom(i) = wrapToPi(theta_odom(i));
 
 end
 % ------end of your wheel odometry algorithm-------
@@ -130,7 +126,7 @@ plot(t_odom,theta_err,'b');
 xlabel('t [s]');
 ylabel('theta [rad]');
 title('heading error (odom-true)');
-print -dpng ass1_q1.png
+print -dpng ass2_q1.png
 
 
 % =================================================================
@@ -141,7 +137,7 @@ print -dpng ass1_q1.png
 % angular velocities to simulate what real wheel odometry is like.  Copy
 % your wheel odometry algorithm from above into the indicated place below
 % to see what this does.  The below loops 100 times with different random
-% noise.  See the plot 'ass1_q2_soln.pdf' for what your results should look
+% noise.  See the plot 'ass2_q2_soln.pdf' for what your results should look
 % like.
 
 % save the original odometry variables for later use
@@ -162,17 +158,13 @@ for n=1:100
     
     % ------insert your wheel odometry algorithm here-------
     for i=2:numodom
+        dt = t_odom(i) - t_odom(i-1);
+        x_odom(i) = x_odom(i-1) + v_odom(i-1)*cos(theta_odom(i-1))*dt;
+        y_odom(i) = y_odom(i-1) + v_odom(i-1)*sin(theta_odom(i-1))*dt;
+        theta_odom(i) =  theta_odom(i-1) + omega_odom(i-1)*dt;
+    
+        theta_odom(i) = wrapToPi(theta_odom(i));
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     end
     % ------end of your wheel odometry algorithm------- 
     
@@ -186,7 +178,7 @@ xlabel('x [m]');
 ylabel('y [m]');
 title('path');
 axis equal;
-print -dpng ass1_q2.png
+print -dpng ass2_q2.png
 
 
 % ================================================================
@@ -202,7 +194,7 @@ print -dpng ass1_q2.png
 % not look too good.  This is because the laser timestamps and odometry
 % timestamps do not line up perfectly and you'll need to interpolate.  Even
 % after this, two additional patches will make your map based on ground
-% truth look as crisp as the one in 'ass1_q3_soln.png'.  The first patch is
+% truth look as crisp as the one in 'ass2_q3_soln.png'.  The first patch is
 % to only plot the laser scans if the angular velocity is less than 
 % 0.1 rad/s; this is because the timestamp interpolation errors have more
 % of an effect when the robot is turning quickly.  The second patch is to
@@ -241,32 +233,30 @@ for n=1:2
     end   
 
     % loop over laser scans
-    for i=1:size(t_laser,1);
+    for i=1:size(t_laser,1)
 
         % ------insert your point transformation algorithm here------
-        
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+        if abs(omega_interp(i)) >= 0.1
+            continue;
+        end 
+
+        TIV = [cos(theta_interp(i)),-sin(theta_interp(i)), 0,  x_interp(i);
+               sin(theta_interp(i)),cos(theta_interp(i)), 0,  y_interp(i);
+                0,0,1,0;
+                0,0,0,1];
+     
+        rpv = [(y_laser(i, :)-0.1).*cos_angles;(y_laser(i, :)-0.1).*sin_angles;zeros(1, npoints);ones(1, npoints) ];
+
+        rpi = TIV * rpv;
+
+        if n==1
+            scatter(rpi(1,:), rpi(2, :),2, 'r');
+       
+        else
+            scatter(rpi(1,:), rpi(2, :),2, 'b');
+        end
+
         
         
         % ------end of your point transformation algorithm-------
@@ -274,5 +264,4 @@ for n=1:2
 end
 
 axis equal;
-print -dpng ass1_q3.png
-
+print -dpng ass2_q3.png
